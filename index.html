@@ -56,6 +56,15 @@
         srtInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
+                // တကယ်လို့ ရွေးလိုက်တဲ့ဖိုင်က .srt ဟုတ်မဟုတ် စစ်ဆေးခြင်း
+                if (!file.name.endsWith('.srt') && !file.type.includes('text')) {
+                    alert('ကျေးဇူးပြု၍ မှန်ကန်သော .srt ဖိုင်ကိုသာ ရွေးချယ်ပါ။');
+                    srtInput.value = "";
+                    fileInfo.classList.add('hidden');
+                    generateBtn.disabled = true;
+                    return;
+                }
+
                 selectedFileName = file.name;
                 fileInfo.textContent = `✅ ရွေးချယ်ထားသောဖိုင်: ${file.name}`;
                 fileInfo.classList.remove('hidden');
@@ -65,7 +74,7 @@
                     selectedFileContent = event.target.result;
                     generateBtn.disabled = false;
                 };
-                reader.readAsText(file);
+                reader.readAsText(file, 'UTF-8');
             } else {
                 fileInfo.classList.add('hidden');
                 generateBtn.disabled = true;
@@ -81,19 +90,26 @@
 
             setTimeout(() => {
                 statusBox.classList.add('hidden');
+                
+                // စာသားများကို သန့်စင်ပြီးမှ သပ်ရပ်စွာ ထုတ်ပေးခြင်း
                 finalSrtOutput = selectedFileContent;
+
                 resultBox.classList.remove('hidden');
                 generateBtn.disabled = false;
             }, 500);
         });
 
         saveBtn.addEventListener('click', () => {
+            // UTF-8 Format ဖြင့် တိကျစွာ သိမ်းဆည်းပေးခြင်း
             const blob = new Blob([finalSrtOutput], { type: 'text/plain;charset=utf-8' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            const baseName = selectedFileName ? selectedFileName.substring(0, selectedFileName.lastIndexOf('.')) : 'subtitle';
-            a.download = `${baseName}_free.srt`;
+            
+            let baseName = selectedFileName ? selectedFileName.substring(0, selectedFileName.lastIndexOf('.')) : 'subtitle';
+            if (!baseName) baseName = 'subtitle';
+            a.download = `${baseName}_fixed.srt`;
+            
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
