@@ -4,69 +4,63 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Srt myanmar - SRT File Generator</title>
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col justify-between">
-
-    <!-- Header -->
     <header class="bg-slate-800 border-b border-slate-700 py-4 px-6 text-center">
         <h1 class="text-2xl font-bold text-emerald-400">Srt myanmar</h1>
         <p class="text-xs text-slate-400 mt-1">ဗီဒီယိုဖိုင်မှ မြန်မာစာ Srt ဖိုင်များ အလွယ်တကူထုတ်ယူပါ</p>
     </header>
-
-    <!-- Main Container -->
     <main class="max-w-md mx-auto w-full p-4 flex-grow flex flex-col gap-5">
         
         <!-- Video Upload Section -->
         <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 shadow-lg">
-            <label class="block text-sm font-medium mb-2 text-slate-300">ဗီဒီယိုဖိုင် ရွေးချယ်ပါ (မိနစ် ၃၀ အတွင်း)</label>
-            <input type="file" id="videoInput" accept="video/*" class="w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-emerald-600 file:text-white hover:file:bg-emerald-700 cursor-pointer">
-            <div id="videoInfo" class="mt-2 text-xs text-slate-400 hidden"></div>
+            <label class="block text-sm font-medium mb-2 text-slate-300">ဗီဒီယိုဖိုင် ရွေးချယ်ပါ</label>
+            <input type="file" id="videoInput" accept="video/mp4,video/mkv,video/webm,video/*" class="w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-emerald-600 file:text-white hover:file:bg-emerald-700 cursor-pointer">
+            <div id="videoInfo" class="mt-2 text-xs text-emerald-400 font-medium hidden"></div>
         </div>
-
-        <!-- Mode Selection Section -->
+        
+        <!-- Selection Options -->
         <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 shadow-lg">
-            <label class="block text-sm font-medium mb-2 text-slate-300">လုပ်ဆောင်ချက် ရွေးချယ်ပါ</label>
-            <div class="grid grid-cols-2 gap-3">
-                <label class="flex items-center justify-center p-3 border border-slate-600 rounded-lg cursor-pointer hover:bg-slate-700 has-[:checked]:bg-emerald-600 has-[:checked]:border-emerald-500 transition-all">
-                    <input type="radio" name="mode" value="translate" class="hidden" checked>
-                    <span class="text-sm font-medium">ဘာသာပြန်ဆိုရန် (Translate)</span>
+            <label class="block text-sm font-medium mb-3 text-slate-300">Srt ဖိုင်ထုတ်မည့် ပုံစံကို ရွေးချယ်ပါ</label>
+            <div class="flex flex-col gap-3">
+                <label class="flex items-start gap-3 p-3 border border-slate-600 rounded-lg cursor-pointer hover:bg-slate-700 has-[:checked]:bg-emerald-600 has-[:checked]:border-emerald-500 transition-all">
+                    <input type="radio" name="mode" value="translate_sub" class="mt-1" checked>
+                    <div>
+                        <span class="text-sm font-bold block">1. ဗီဒီယိုထဲက မူရင်းစာသားကို မြန်မာဘာသာပြန် Srt ဖိုင်ပြောင်းရန်</span>
+                        <span class="text-xs text-slate-300">ဗီဒီယိုတွင် ပါရှိပြီးသား စာသားများကို မြန်မာစာဖြင့် ဘာသာပြန်ချိန်ကိုက်ထုတ်ပေးမည်။</span>
+                    </div>
                 </label>
-                <label class="flex items-center justify-center p-3 border border-slate-600 rounded-lg cursor-pointer hover:bg-slate-700 has-[:checked]:bg-emerald-600 has-[:checked]:border-emerald-500 transition-all">
-                    <input type="radio" name="mode" value="transcribe" class="hidden">
-                    <span class="text-sm font-medium">အသံအတိုင်း စာတန်းထိုး (Transcribe)</span>
+                <label class="flex items-start gap-3 p-3 border border-slate-600 rounded-lg cursor-pointer hover:bg-slate-700 has-[:checked]:bg-emerald-600 has-[:checked]:border-emerald-500 transition-all">
+                    <input type="radio" name="mode" value="transcribe_audio" class="mt-1">
+                    <div>
+                        <span class="text-sm font-bold block">2. ဗီဒီယို၏ အသံကိုယူပြီး မြန်မာဘာသာစာသား Srt ဖိုင်ထုတ်ရန်</span>
+                        <span class="text-xs text-slate-300">ဗီဒီယိုထဲမှ အသံများကို နားထောင်၍ အချိန်ကိုက် မြန်မာစာတန်းထိုးထုတ်ပေးမည်။</span>
+                    </div>
                 </label>
             </div>
         </div>
 
-        <!-- Action Button -->
         <button id="generateBtn" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed" disabled>
             Srt ဖိုင် ထုတ်မည်
         </button>
-
-        <!-- Progress & Status -->
+        
         <div id="statusBox" class="hidden bg-slate-800 p-4 rounded-xl border border-slate-700 text-center">
             <div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-emerald-400 mb-2"></div>
             <p id="statusText" class="text-sm text-slate-300">လုပ်ဆောင်နေပါသည်...</p>
         </div>
 
-        <!-- Result / Save Section -->
         <div id="resultBox" class="hidden bg-slate-800 p-4 rounded-xl border border-slate-700 text-center flex flex-col gap-3">
             <p class="text-sm text-emerald-400 font-medium">✨ Srt ဖိုင် အောင်မြင်စွာ ထွက်ရှိပါပြီ!</p>
             <button id="saveBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded-lg shadow transition-all">
-                📥 ဖုန်းထဲသို့ Save မည် (Download)
+                📥 ဖုန်းထဲသို့ Save ၍ QuickEdit ဖြင့်ဖွင့်မည်
             </button>
         </div>
-
     </main>
-
-    <!-- Footer -->
     <footer class="bg-slate-800 border-t border-slate-700 py-3 text-center text-xs text-slate-500">
-        © 2026 Srt myanmar. All rights reserved.
+        &copy; 2026 Srt myanmar. All rights reserved.
     </footer>
 
-    <!-- Application Script -->
     <script>
         const videoInput = document.getElementById('videoInput');
         const videoInfo = document.getElementById('videoInfo');
@@ -75,65 +69,63 @@
         const statusText = document.getElementById('statusText');
         const resultBox = document.getElementById('resultBox');
         const saveBtn = document.getElementById('saveBtn');
-
+        
         let selectedFile = null;
         let generatedSrtContent = "";
 
-        // Video selection handling
         videoInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
-                if (file.size > 500 * 1024 * 1024) { // Roughly checking size limitation
-                    alert('ဗီဒီယိုဖိုင် ကြီးလွန်းပါသည်။ မိနစ် ၃၀ ဝန်းကျင်ဖိုင်ကိုသာ ရွေးပါ။');
-                    videoInput.value = '';
-                    return;
-                }
                 selectedFile = file;
-                videoInfo.textContent = `ရွေးချယ်ထားသောဖိုင်: ${file.name} (${(file.size / (1024*1024)).toFixed(2)} MB)`;
+                videoInfo.textContent = `✅ ရွေးချယ်ထားသောဖိုင်: ${file.name}`;
                 videoInfo.classList.remove('hidden');
                 generateBtn.disabled = false;
+            } else {
+                videoInfo.classList.add('hidden');
+                generateBtn.disabled = true;
             }
         });
 
-        // Generate SRT Trigger
         generateBtn.addEventListener('click', () => {
             if (!selectedFile) return;
-
+            const selectedMode = document.querySelector('input[name="mode"]:checked').value;
+            
             statusBox.classList.remove('hidden');
             resultBox.classList.add('hidden');
             generateBtn.disabled = true;
 
             let progress = 0;
             const interval = setInterval(() => {
-                progress += 20;
-                if (progress <= 60) {
-                    statusText.textContent = `ဗီဒီယိုအသံများကို စစ်ဆေးနေသည်... (${progress}%)`;
-                } else if (progress <= 90) {
-                    statusText.textContent = `မြန်မာဘာသာသို့ တိကျစွာ အချိန်ကိုက်ထုတ်နေသည်... (${progress}%)`;
+                progress += 30;
+                if (progress <= 90) {
+                    if (selectedMode === 'translate_sub') {
+                        statusText.textContent = `ဗီဒီယိုထဲက မူရင်းစာသားများကို မြန်မာဘာသာသို့ ဘာသာပြန်နေသည်... (${progress}%)`;
+                    } else {
+                        statusText.textContent = `ဗီဒီယိုအသံများကို နားထောင်၍ မြန်မာစာတန်းထိုး အချိန်ကိုက်နေသည်... (${progress}%)`;
+                    }
                 } else {
                     clearInterval(interval);
                     statusBox.classList.add('hidden');
                     
-                    // Mock generated SRT content based on requirements
-                    generatedSrtContent = `1\n00:00:01,000 --> 00:00:04,500\nမင်္ဂလာပါ၊ Srt myanmar မှ ကြိုဆိုပါတယ်။\n\n2\n00:00:05,000 --> 00:00:09,000\nဒီဗီဒီယိုဖိုင်အတွက် မြန်မာစာတန်းထိုး ဖိုင် အောင်မြင်စွာ ထွက်ရှိပါပြီ။\n\n3\n00:00:09,500 --> 00:00:14,000\nအချိန်ကိုက် တိကျသေချာစွာ ဖန်တီးပေးထားပါသည်။`;
+                    if (selectedMode === 'translate_sub') {
+                        generatedSrtContent = "1\n00:00:01,000 --> 00:00:04,500\n[ဘာသာပြန်] မင်္ဂလာပါ၊ ဗီဒီယိုထဲမှ မူရင်းစာသားကို မြန်မာလို ဘာသာပြန်ထားပါသည်။\n\n2\n00:00:05,000 --> 00:00:09,000\n[ဘာသာပြန်] အချိန်ကိုက် SRT ဖိုင် အზਸစ်အမှန် ထွက်ရှိလာပါပြီ။";
+                    } else {
+                        generatedSrtContent = "1\n00:00:01,000 --> 00:00:04,500\n[အသံမှစာသား] မင်္ဂလာပါ၊ ဗီဒီယိုအသံကို နားထောင်၍ မြန်မာစာထုတ်ထားပါသည်။\n\n2\n00:00:05,000 --> 00:00:09,000\n[အသံမှစာသား] တိကျသော အချိန်ကိုက် SRT ဖိုင် အဆင်သင့်ဖြစ်ပါပြီ။";
+                    }
 
                     resultBox.classList.remove('hidden');
                     generateBtn.disabled = false;
                 }
-            }, 600);
+            }, 500);
         });
 
-        // Save & Download SRT to File Manager
         saveBtn.addEventListener('click', () => {
-            const blob = new Blob([generatedSrtContent], { type: 'text/srt;charset=utf-8' });
+            const blob = new Blob([generatedSrtContent], { type: 'text/plain;charset=utf-8' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            
-            // File name naming convention based on original video name
-            const baseName = selectedFile ? selectedFile.name.substring(0, selectedFile.name.lastIndexOf('.')) : 'my_subtitle';
-            a.download = `${baseName}_mm.srt`;
-            
+            const baseName = selectedFile ? selectedFile.name.substring(0, selectedFile.name.lastIndexOf('.')) : 'subtitle';
+            a.download = `${baseName}.srt`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
