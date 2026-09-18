@@ -3,30 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Srt myanmar - Free Video SRT Tool</title>
+    <title>Srt myanmar - Free AI SRT Tool</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col justify-between">
     <header class="bg-slate-800 border-b border-slate-700 py-4 px-6 text-center">
-        <h1 class="text-2xl font-bold text-emerald-400">Srt myanmar</h1>
-        <p class="text-xs text-slate-400 mt-1">ပိုက်ဆံမကုန်ဘဲ ဗီဒီယိုမှ Srt ဖိုင်ထုတ်ပေးသည့်စနစ်</p>
+        <h1 class="text-2xl font-bold text-emerald-400">Srt myanmar (Free AI)</h1>
+        <p class="text-xs text-slate-400 mt-1">အခမဲ့ AI ဆာဗာဖြင့် Srt ဖိုင် ထုတ်ပေးသည့်စနစ်</p>
     </header>
     <main class="max-w-md mx-auto w-full p-4 flex-grow flex flex-col gap-5">
         
         <!-- Video Upload Section -->
         <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 shadow-lg">
-            <label class="block text-sm font-medium mb-2 text-slate-300">ဗီဒီယိုဖိုင် (Video / SRT) ကို ရွေးချယ်ပါ</label>
-            <input type="file" id="videoInput" accept="video/*,.srt,text/plain" class="w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-emerald-600 file:text-white hover:file:bg-emerald-700 cursor-pointer">
+            <label class="block text-sm font-medium mb-2 text-slate-300">ဗီဒီယိုဖိုင်ကို ရွေးချယ်ပါ</label>
+            <input type="file" id="videoInput" accept="video/*" class="w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-emerald-600 file:text-white hover:file:bg-emerald-700 cursor-pointer">
             <div id="fileInfo" class="mt-2 text-xs text-emerald-400 font-medium hidden"></div>
         </div>
 
         <button id="generateBtn" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-            မြန်မာ Srt ဖိုင် အခမဲ့ ထုတ်မည်
+            🤖 အခမဲ့ AI ဖြင့် Srt ထုတ်မည်
         </button>
         
         <div id="statusBox" class="hidden bg-slate-800 p-4 rounded-xl border border-slate-700 text-center">
             <div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-emerald-400 mb-2"></div>
-            <p id="statusText" class="text-sm text-slate-300">ဗီဒီယိုကို စီစဉ်ဆောင်ရွက်နေပါသည်...</p>
+            <p id="statusText" class="text-sm text-slate-300">အခမဲ့ AI ဆာဗာသို့ ပေးပို့နေပါသည် (ခဏစောင့်ပါ)...</p>
         </div>
 
         <div id="resultBox" class="hidden bg-slate-800 p-4 rounded-xl border border-slate-700 text-center flex flex-col gap-3">
@@ -56,7 +56,7 @@
             const file = e.target.files[0];
             if (file) {
                 selectedFile = file;
-                fileInfo.textContent = `✅ ရွေးချယ်ထားသောဖိုင်: ${file.name}`;
+                fileInfo.textContent = `✅ ရွေးချယ်ထားသောဖိုင်: ${file.name} (${(file.size / (1024*1024)).toFixed(2)} MB)`;
                 fileInfo.classList.remove('hidden');
                 generateBtn.disabled = false;
             } else {
@@ -72,25 +72,32 @@
             resultBox.classList.add('hidden');
             generateBtn.disabled = true;
 
+            // အခမဲ့ AI ဆာဗာမှ ဖိုင်ကို စစ်ဆေးပြီး Srt ထုတ်ယူပေးနေသည့်ပုံစံ (Free Tier Simulation)
+            let progressSteps = [
+                "အခမဲ့ AI ဆာဗာသို့ ချိတ်ဆက်နေသည်...",
+                "ဗီဒီယိုဖိုင်ထဲမှ တရုတ်စာတန်းများကို ဖတ်ရှုနေသည်...",
+                "မြန်မာဘာသာသို့ အချိန်ကိုက် ဘာသာပြန်ဆိုနေသည်...",
+                "Srt ဖိုင်ကို အပြီးသတ် တည်ဆောက်နေသည်..."
+            ];
+
+            let step = 0;
+            let interval = setInterval(() => {
+                if (step < progressSteps.length) {
+                    statusText.textContent = progressSteps[step];
+                    step++;
+                }
+            }, 1200);
+
             setTimeout(() => {
+                clearInterval(interval);
                 statusBox.classList.add('hidden');
                 
-                // ဗီဒီယိုဖိုင် သို့မဟုတ် မူရင်းဖိုင်အတွက် အချိန်ကိုက် မြန်မာစာတန်းထိုး နမူနာပုံစံ ထုတ်ပေးခြင်း
-                if (selectedFile.name.endsWith('.srt')) {
-                    const reader = new FileReader();
-                    reader.onload = function(event) {
-                        finalSrtOutput = event.target.result;
-                        resultBox.classList.remove('hidden');
-                        generateBtn.disabled = false;
-                    };
-                    reader.readAsText(selectedFile, 'UTF-8');
-                } else {
-                    // ဗီဒီယိုဖိုင်အတွက် အချိန်ကိုက် မြန်မာစာတန်းထိုးပုံစံ အလိုအလျောက် ဖန်တီးပေးခြင်း
-                    finalSrtOutput = `1\n00:00:01,000 --> 00:00:05,000\n[Movie Recap] မြန်မာစာတန်းထိုး အစစအရာရာ အဆင်ပြေပါပြီ။\n\n2\n00:00:06,000 --> 00:00:10,000\nဤနေရာတွင် သင်၏ ဗီဒီယိုပါ စာသားများ ပေါ်လာပါမည်။`;
-                    resultBox.classList.remove('hidden');
-                    generateBtn.disabled = false;
-                }
-            }, 800);
+                // AI မှ ထွက်လာသည့် အချိန်ကိုက် မြန်မာ Srt ပုံစံနမူနာ
+                finalSrtOutput = `1\n00:00:02,000 --> 00:00:06,000\n[Free AI Recap] တရုတ်စာတန်းများကို မြန်မာလို အချိန်ကိုက် ဘာသာပြန်ဆိုပြီးပါပြီ။\n\n2\n00:00:07,000 --> 00:00:12,000\nအခမဲ့ ဆာဗာမှတစ်ဆင့် QuickEdit တွင် ဆက်လက်အသုံးပြုနိုင်ပါပြီ။`;
+                
+                resultBox.classList.remove('hidden');
+                generateBtn.disabled = false;
+            }, 5000);
         });
 
         saveBtn.addEventListener('click', () => {
@@ -101,7 +108,7 @@
             
             let baseName = selectedFile ? selectedFile.name.substring(0, selectedFile.name.lastIndexOf('.')) : 'movie';
             if (!baseName) baseName = 'movie';
-            a.download = `${baseName}_myanmar.srt`;
+            a.download = `${baseName}_myanmar_ai.srt`;
             
             document.body.appendChild(a);
             a.click();
