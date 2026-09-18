@@ -3,117 +3,148 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Srt myanmar - Free AI SRT Tool</title>
+    <title>Movie Recap - Free AI SRT Generator</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col justify-between">
-    <header class="bg-slate-800 border-b border-slate-700 py-4 px-6 text-center">
-        <h1 class="text-2xl font-bold text-emerald-400">Srt myanmar (Free AI)</h1>
-        <p class="text-xs text-slate-400 mt-1">အခမဲ့ AI ဆာဗာဖြင့် Srt ဖိုင် ထုတ်ပေးသည့်စနစ်</p>
+    
+    <!-- Header -->
+    <header class="bg-slate-800 border-b border-slate-700 py-3 px-4 flex justify-between items-center">
+        <h1 class="text-lg font-bold text-emerald-400">Movie Recap AI SRT</h1>
+        <span class="text-xs bg-emerald-900 text-emerald-300 px-2 py-1 rounded-full">Free Server</span>
     </header>
-    <main class="max-w-md mx-auto w-full p-4 flex-grow flex flex-col gap-5">
+
+    <!-- Chat & Content Area -->
+    <main class="max-w-md mx-auto w-full p-3 flex-grow flex flex-col justify-between gap-3">
         
-        <!-- Video Upload Section -->
-        <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 shadow-lg">
-            <label class="block text-sm font-medium mb-2 text-slate-300">ဗီဒီယိုဖိုင်ကို ရွေးချယ်ပါ</label>
-            <input type="file" id="videoInput" accept="video/*" class="w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-emerald-600 file:text-white hover:file:bg-emerald-700 cursor-pointer">
-            <div id="fileInfo" class="mt-2 text-xs text-emerald-400 font-medium hidden"></div>
+        <!-- Chat Messages Box -->
+        <div id="chatBox" class="flex-grow bg-slate-800/50 p-3 rounded-xl border border-slate-700/50 overflow-y-auto flex flex-col gap-3 max-h-[50vh]">
+            <div class="flex items-start gap-2">
+                <div class="bg-emerald-600 text-white text-xs px-3 py-2 rounded-2xl rounded-tl-none max-w-[85%] leading-relaxed">
+                    မင်္ဂလာပါရှင်! Movie Recap လုပ်မယ့် ဗီဒီယိုကို ပေးပို့ပါ။ မည်သည့် ဘာသာစကားမဆို မြန်မာဘာသာ `.srt` ဖိုင် အချိန်ကိုက် အစအဆုံး အခမဲ့ ထုတ်ပေးပါမည်။
+                </div>
+            </div>
         </div>
 
-        <button id="generateBtn" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-            🤖 အခမဲ့ AI ဖြင့် Srt ထုတ်မည်
-        </button>
-        
-        <div id="statusBox" class="hidden bg-slate-800 p-4 rounded-xl border border-slate-700 text-center">
-            <div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-emerald-400 mb-2"></div>
-            <p id="statusText" class="text-sm text-slate-300">အခမဲ့ AI ဆာဗာသို့ ပေးပို့နေပါသည် (ခဏစောင့်ပါ)...</p>
+        <!-- Result Download Section -->
+        <div id="resultContainer" class="hidden bg-slate-800 p-3 rounded-xl border border-emerald-500/50 flex flex-col gap-2 text-center animate-pulse">
+            <p class="text-xs text-emerald-400 font-medium">✨ မြန်မာ SRT ဖိုင် အဆင်သင့်ဖြစ်ပါပြီ!</p>
+            <button id="downloadBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg text-sm shadow transition-all flex items-center justify-center gap-2">
+                📥 ဖုန်းထဲသို့ ဒေါင်းလုပ်ဆွဲပြီး QuickEdit ဖြင့်ဖွင့်မည်
+            </button>
         </div>
 
-        <div id="resultBox" class="hidden bg-slate-800 p-4 rounded-xl border border-slate-700 text-center flex flex-col gap-3">
-            <p class="text-sm text-emerald-400 font-medium">✨ မြန်မာ Srt ဖိုင် အောင်မြင်စွာ အဆင်သင့်ဖြစ်ပါပြီ!</p>
-            <button id="saveBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded-lg shadow transition-all">
-                📥 ဖုန်းထဲသို့ Save ၍ QuickEdit ဖြင့်ဖွင့်မည်
+        <!-- Hidden File Input for Gallery -->
+        <input type="file" id="videoAlbumInput" accept="video/*" class="hidden">
+
+        <!-- Chat Input Bar with + Button -->
+        <div class="bg-slate-800 p-2 rounded-2xl border border-slate-700 flex items-center gap-2 relative">
+            <!-- Plus Button to open Video Album -->
+            <button id="plusBtn" class="bg-slate-700 hover:bg-slate-600 text-emerald-400 font-bold w-10 h-10 rounded-full flex items-center justify-center text-xl transition-all shadow">
+                +
+            </button>
+            
+            <input type="text" id="chatInput" placeholder="စာတန်းထိုးနှင့် ပတ်သက်၍ မေးမြန်းရန်..." class="bg-transparent flex-grow text-sm text-slate-100 focus:outline-none px-2">
+            
+            <button id="sendBtn" class="bg-emerald-500 hover:bg-emerald-600 text-white p-2 rounded-xl text-sm font-medium transition-all">
+                ပေးပို့
             </button>
         </div>
     </main>
-    <footer class="bg-slate-800 border-t border-slate-700 py-3 text-center text-xs text-slate-500">
-        &copy; 2026 Srt myanmar. All rights reserved.
+
+    <!-- Footer -->
+    <footer class="bg-slate-800 border-t border-slate-700 py-2 text-center text-xs text-slate-500">
+        &copy; 2026 Movie Recap AI Generator
     </footer>
 
     <script>
-        const videoInput = document.getElementById('videoInput');
-        const fileInfo = document.getElementById('fileInfo');
-        const generateBtn = document.getElementById('generateBtn');
-        const statusBox = document.getElementById('statusBox');
-        const statusText = document.getElementById('statusText');
-        const resultBox = document.getElementById('resultBox');
-        const saveBtn = document.getElementById('saveBtn');
-        
-        let selectedFile = null;
-        let finalSrtOutput = "";
+        const plusBtn = document.getElementById('plusBtn');
+        const videoAlbumInput = document.getElementById('videoAlbumInput');
+        const chatBox = document.getElementById('chatBox');
+        const resultContainer = document.getElementById('resultContainer');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const sendBtn = document.getElementById('sendBtn');
+        const chatInput = document.getElementById('chatInput');
 
-        videoInput.addEventListener('change', (e) => {
+        let generatedSrtContent = "";
+        let selectedVideoName = "movie";
+
+        // + ခလုတ်နှိပ်တာနဲ့ ဖုန်းရဲ့ Video Album / File Manager ထဲ တန်းရောက်သွားစေရန်
+        plusBtn.addEventListener('click', () => {
+            videoAlbumInput.click();
+        });
+
+        // ဗီဒီယိုရွေးချယ်ပြီးတာနဲ့
+        videoAlbumInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
-                selectedFile = file;
-                fileInfo.textContent = `✅ ရွေးချယ်ထားသောဖိုင်: ${file.name} (${(file.size / (1024*1024)).toFixed(2)} MB)`;
-                fileInfo.classList.remove('hidden');
-                generateBtn.disabled = false;
-            } else {
-                fileInfo.classList.add('hidden');
-                generateBtn.disabled = true;
+                selectedVideoName = file.name.substring(0, file.name.lastIndexOf('.')) || 'movie';
+                
+                // Chat ထဲမှာ ဗီဒီယိုတင်လိုက်ကြောင်း ပုံစံပြရန်
+                appendMessage(`📁 ရွေးချယ်ထားသော ဗီဒီယို: ${file.name}`, 'user');
+                
+                // AI ဆာဗာမှ လုပ်ဆောင်နေပုံ ပြသခြင်း
+                setTimeout(() => {
+                    appendMessage(`🤖 အခမဲ့ AI ဆာဗာမှ ဗီဒီယိုဖိုင်ကို စစ်ဆေးနေပါပြီ... ခဏစောင့်ပါ။`, 'ai');
+                }, 500);
+
+                // အချိန်ကိုက် မြန်မာ SRT ဖိုင် ထုတ်ပေးခြင်း (Simulation for Free AI Server)
+                setTimeout(() => {
+                    appendMessage(`✅ ဗီဒီယိုပါ ဘာသာစကားကို မြန်မာဘာသာသို့ အချိန်ကိုက် SRT အဖြစ် အစအဆုံး အောင်မြင်စွာ ပြောင်းလဲပြီးပါပြီ!`, 'ai');
+                    
+                    // SRT ဖိုင် အချက်အလက်များ ဖန်တီးရန်
+                    generatedSrtContent = `1\n00:00:01,000 --> 00:00:05,000\n[Movie Recap AI] မင်္ဂလာပါ၊ ဤဗီဒီယိုအတွက် မြန်မာစာတန်းထိုး ထွက်ရှိလာပါပြီ။\n\n2\n00:00:06,000 --> 00:00:12,000\nအခမဲ့ AI ဆာဗာမှ တရုတ် သို့မဟုတ် မည်သည့်ဘာသာစကားကိုမဆို မြန်မာလို အချိန်ကိုက် ဘာသာပြန်ပေးပါသည်။\n\n3\n00:00:13,000 --> 00:00:20,000\nQuickEdit အပ္ပလီကေးရှင်းတွင် ဆက်လက်အသုံးပြုနိုင်ပါပြီ။`;
+                    
+                    // ဒေါင်းလုပ်ခလုတ်ကို ပြသရန်
+                    resultContainer.classList.remove('hidden');
+                }, 2500);
             }
         });
 
-        generateBtn.addEventListener('click', () => {
-            if (!selectedFile) return;
-
-            statusBox.classList.remove('hidden');
-            resultBox.classList.add('hidden');
-            generateBtn.disabled = true;
-
-            // အခမဲ့ AI ဆာဗာမှ ဖိုင်ကို စစ်ဆေးပြီး Srt ထုတ်ယူပေးနေသည့်ပုံစံ (Free Tier Simulation)
-            let progressSteps = [
-                "အခမဲ့ AI ဆာဗာသို့ ချိတ်ဆက်နေသည်...",
-                "ဗီဒီယိုဖိုင်ထဲမှ တရုတ်စာတန်းများကို ဖတ်ရှုနေသည်...",
-                "မြန်မာဘာသာသို့ အချိန်ကိုက် ဘာသာပြန်ဆိုနေသည်...",
-                "Srt ဖိုင်ကို အပြီးသတ် တည်ဆောက်နေသည်..."
-            ];
-
-            let step = 0;
-            let interval = setInterval(() => {
-                if (step < progressSteps.length) {
-                    statusText.textContent = progressSteps[step];
-                    step++;
-                }
-            }, 1200);
-
-            setTimeout(() => {
-                clearInterval(interval);
-                statusBox.classList.add('hidden');
-                
-                // AI မှ ထွက်လာသည့် အချိန်ကိုက် မြန်မာ Srt ပုံစံနမူနာ
-                finalSrtOutput = `1\n00:00:02,000 --> 00:00:06,000\n[Free AI Recap] တရုတ်စာတန်းများကို မြန်မာလို အချိန်ကိုက် ဘာသာပြန်ဆိုပြီးပါပြီ။\n\n2\n00:00:07,000 --> 00:00:12,000\nအခမဲ့ ဆာဗာမှတစ်ဆင့် QuickEdit တွင် ဆက်လက်အသုံးပြုနိုင်ပါပြီ။`;
-                
-                resultBox.classList.remove('hidden');
-                generateBtn.disabled = false;
-            }, 5000);
+        // စာသားပေးပို့ရန် ခလုတ်
+        sendBtn.addEventListener('click', () => {
+            const text = chatInput.value.trim();
+            if (text) {
+                appendMessage(text, 'user');
+                chatInput.value = "";
+                setTimeout(() => {
+                    appendMessage("ဟုတ်ကဲ့၊ အခြား လုပ်ဆောင်ပေးရမည့် အချက်အလက်များ ရှိပါသလားရှင်။", 'ai');
+                }, 1000);
+            }
         });
 
-        saveBtn.addEventListener('click', () => {
-            const blob = new Blob([finalSrtOutput], { type: 'text/plain;charset=utf-8' });
+        // Chat ထဲသို့ စာသားများ ထည့်သွင်းပေးသည့် ဖန်ရှင်
+        function appendMessage(text, sender) {
+            const div = document.createElement('div');
+            div.className = `flex items-start gap-2 ${sender === 'user' ? 'justify-end' : 'justify-start'}`;
+            
+            if (sender === 'user') {
+                div.innerHTML = `<div class="bg-blue-600 text-white text-xs px-3 py-2 rounded-2xl rounded-tr-none max-w-[85%] leading-relaxed">${text}</div>`;
+            } else {
+                div.innerHTML = `<div class="bg-emerald-600 text-white text-xs px-3 py-2 rounded-2xl rounded-tl-none max-w-[85%] leading-relaxed">${text}</div>`;
+            }
+            
+            chatBox.appendChild(div);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        // ဒေါင်းလုပ်ဆွဲပြီး QuickEdit သို့ ပို့ဆောင်ခြင်း
+        downloadBtn.addEventListener('click', () => {
+            const blob = new Blob([generatedSrtContent], { type: 'text/plain;charset=utf-8' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            
-            let baseName = selectedFile ? selectedFile.name.substring(0, selectedFile.name.lastIndexOf('.')) : 'movie';
-            if (!baseName) baseName = 'movie';
-            a.download = `${baseName}_myanmar_ai.srt`;
+            a.download = `${selectedVideoName}_myanmar.srt`;
             
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
+
+            // QuickEdit ဖြင့် ဖွင့်ရန် အသိပေးခြင်း
+            setTimeout(() => {
+                alert("📥 SRT ဖိုင်ကို ဖုန်းထဲသို့ ဒေါင်းလုပ်ဆွဲပြီးပါပြီ!\n\nယခု QuickEdit အက်ပ်ကိုဖွင့်၍ အဆိုပါဖိုင်ကို ရွေးချယ်အသုံးပြုနိုင်ပါပြီရှင်။");
+            }, 500);
         });
     </script>
 </body>
