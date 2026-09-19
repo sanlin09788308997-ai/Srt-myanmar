@@ -1,151 +1,143 @@
-<!DOCTYPE html>
-<html lang="my">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Movie Recap - Free AI SRT Generator</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col justify-between">
-    
-    <!-- Header -->
-    <header class="bg-slate-800 border-b border-slate-700 py-3 px-4 flex justify-between items-center">
-        <h1 class="text-lg font-bold text-emerald-400">Movie Recap AI SRT</h1>
-        <span class="text-xs bg-emerald-900 text-emerald-300 px-2 py-1 rounded-full">Free Server</span>
-    </header>
+import streamlit as st
+import cv2
+import easyocr
+import os
+import numpy as np
 
-    <!-- Chat & Content Area -->
-    <main class="max-w-md mx-auto w-full p-3 flex-grow flex flex-col justify-between gap-3">
+# Page configuration
+st.set_page_config(page_title="Video Subtitle Extractor & Quick Edit", layout="wide")
+
+st.title("🎬 Video Hardcoded Subtitle to SRT & Quick Edit")
+st.write("၁။ ဗီဒီယိုရွေးချယ်ပါ ➔ ၂။ SRT ဖိုင်အလိုအလျောက်ထုတ်ယူပါ ➔ ၃။ Quick Edit တွင် စာသားများကို လိုသလို ပြင်ဆင်ပါ")
+
+# EasyOCR Reader ကို cache လုပ်ခြင်း
+@st.cache_resource
+def load_reader():
+    return easyocr.Reader(['en', 'my'], gpu=False)
+
+with st.spinner("AI OCR မော်ဒယ်ကို ချိတ်ဆက်နေပါပြီ... ခဏစောင့်ပေးပါ။"):
+    reader = load_reader()
+
+def format_time(seconds):
+    hours = int(seconds // 3600)
+    minutes = int((seconds % 3600) // 60)
+    secs = int(seconds % 60)
+    milliseconds = int((seconds - int(seconds)) * 1000)
+    return f"{hours:02d}:{minutes:02d}:{secs:02d},{milliseconds:03d}"
+
+# Session State အတွက် သိမ်းဆည်းရန် နေရာများ
+if "srt_lines" not in st.session_state:
+    st.session_state.srt_lines = []
+
+# အဆင့် ၁ - ဗီဒီယိုဖိုင် ရွေးချယ်ခြင်း (Browse / Upload video)
+st.subheader("📁 အဆင့် ၁ - ဗီဒီယိုဖိုင် ရွေးချယ်ပါ")
+uploaded_file = st.file_uploader("သင့်ဖုန်း သို့မဟုတ် ကွန်ပျူတာထဲမှ ဗီဒီယိုဖိုင်ကို ရွေးချယ်ပါ (MP4, MKV, AVI)", type=["mp4", "mkv", "avi", "mov"])
+
+if uploaded_file is not None:
+    video_path = "temp_input_video.mp4"
+    with open(video_path, "wb") as f:
+        f.write(uploaded_file.getbuffer())
         
-        <!-- Chat Messages Box -->
-        <div id="chatBox" class="flex-grow bg-slate-800/50 p-3 rounded-xl border border-slate-700/50 overflow-y-auto flex flex-col gap-3 max-h-[50vh]">
-            <div class="flex items-start gap-2">
-                <div class="bg-emerald-600 text-white text-xs px-3 py-2 rounded-2xl rounded-tl-none max-w-[85%] leading-relaxed">
-                    မင်္ဂလာပါရှင်! Movie Recap လုပ်မယ့် ဗီဒီယိုကို ပေးပို့ပါ။ မည်သည့် ဘာသာစကားမဆို မြန်မာဘာသာ `.srt` ဖိုင် အချိန်ကိုက် အစအဆုံး အခမဲ့ ထုတ်ပေးပါမည်။
-                </div>
-            </div>
-        </div>
-
-        <!-- Result Download Section -->
-        <div id="resultContainer" class="hidden bg-slate-800 p-3 rounded-xl border border-emerald-500/50 flex flex-col gap-2 text-center animate-pulse">
-            <p class="text-xs text-emerald-400 font-medium">✨ မြန်မာ SRT ဖိုင် အဆင်သင့်ဖြစ်ပါပြီ!</p>
-            <button id="downloadBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg text-sm shadow transition-all flex items-center justify-center gap-2">
-                📥 ဖုန်းထဲသို့ ဒေါင်းလုပ်ဆွဲပြီး QuickEdit ဖြင့်ဖွင့်မည်
-            </button>
-        </div>
-
-        <!-- Hidden File Input for Gallery -->
-        <input type="file" id="videoAlbumInput" accept="video/*" class="hidden">
-
-        <!-- Chat Input Bar with + Button -->
-        <div class="bg-slate-800 p-2 rounded-2xl border border-slate-700 flex items-center gap-2 relative">
-            <!-- Plus Button to open Video Album -->
-            <button id="plusBtn" class="bg-slate-700 hover:bg-slate-600 text-emerald-400 font-bold w-10 h-10 rounded-full flex items-center justify-center text-xl transition-all shadow">
-                +
-            </button>
-            
-            <input type="text" id="chatInput" placeholder="စာတန်းထိုးနှင့် ပတ်သက်၍ မေးမြန်းရန်..." class="bg-transparent flex-grow text-sm text-slate-100 focus:outline-none px-2">
-            
-            <button id="sendBtn" class="bg-emerald-500 hover:bg-emerald-600 text-white p-2 rounded-xl text-sm font-medium transition-all">
-                ပေးပို့
-            </button>
-        </div>
-    </main>
-
-    <!-- Footer -->
-    <footer class="bg-slate-800 border-t border-slate-700 py-2 text-center text-xs text-slate-500">
-        &copy; 2026 Movie Recap AI Generator
-    </footer>
-
-    <script>
-        const plusBtn = document.getElementById('plusBtn');
-        const videoAlbumInput = document.getElementById('videoAlbumInput');
-        const chatBox = document.getElementById('chatBox');
-        const resultContainer = document.getElementById('resultContainer');
-        const downloadBtn = document.getElementById('downloadBtn');
-        const sendBtn = document.getElementById('sendBtn');
-        const chatInput = document.getElementById('chatInput');
-
-        let generatedSrtContent = "";
-        let selectedVideoName = "movie";
-
-        // + ခလုတ်နှိပ်တာနဲ့ ဖုန်းရဲ့ Video Album / File Manager ထဲ တန်းရောက်သွားစေရန်
-        plusBtn.addEventListener('click', () => {
-            videoAlbumInput.click();
-        });
-
-        // ဗီဒီယိုရွေးချယ်ပြီးတာနဲ့
-        videoAlbumInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                selectedVideoName = file.name.substring(0, file.name.lastIndexOf('.')) || 'movie';
+    st.video(video_path)
+    
+    # အဆင့် ၂ - လုပ်ဆောင်ချက်စတင်ရန်
+    if st.button("🚀 ဗီဒီယိုထဲမှ စာတန်းများကို SRT သို့ ပြောင်းမည်"):
+        progress_bar = st.progress(0)
+        status_text = st.empty()
+        
+        cap = cv2.VideoCapture(video_path)
+        fps = cap.get(cv2.CAP_PROP_FPS)
+        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        
+        frame_count = 0
+        extracted_data = []
+        last_text = ""
+        start_frame = 0
+        
+        skip_frames = int(fps) if fps > 0 else 30
+        
+        status_text.text("ဗီဒီယိုကို စစ်ဆေးနေပါပြီ... ခဏစောင့်ပေးပါ။")
+        
+        while cap.isOpened():
+            ret, frame = cap.read()
+            if not ret:
+                break
                 
-                // Chat ထဲမှာ ဗီဒီယိုတင်လိုက်ကြောင်း ပုံစံပြရန်
-                appendMessage(`📁 ရွေးချယ်ထားသော ဗီဒီယို: ${file.name}`, 'user');
+            if frame_count % skip_frames == 0:
+                height, width, _ = frame.shape
+                # ဗီဒီယိုအောက်ခြေ ၂၅% ကို ဖြတ်ယူဖတ်မည်
+                crop_frame = frame[int(height*0.75):height, 0:width]
                 
-                // AI ဆာဗာမှ လုပ်ဆောင်နေပုံ ပြသခြင်း
-                setTimeout(() => {
-                    appendMessage(`🤖 အခမဲ့ AI ဆာဗာမှ ဗီဒီယိုဖိုင်ကို စစ်ဆေးနေပါပြီ... ခဏစောင့်ပါ။`, 'ai');
-                }, 500);
-
-                // အချိန်ကိုက် မြန်မာ SRT ဖိုင် ထုတ်ပေးခြင်း (Simulation for Free AI Server)
-                setTimeout(() => {
-                    appendMessage(`✅ ဗီဒီယိုပါ ဘာသာစကားကို မြန်မာဘာသာသို့ အချိန်ကိုက် SRT အဖြစ် အစအဆုံး အောင်မြင်စွာ ပြောင်းလဲပြီးပါပြီ!`, 'ai');
+                results = reader.readtext(crop_frame)
+                current_text = " ".join([res[1] for res in results]) if results else ""
+                current_text = current_text.strip()
+                
+                current_time = frame_count / fps
+                
+                if current_text != last_text:
+                    if last_text:
+                        end_time = current_time
+                        extracted_data.append({
+                            "start": format_time(start_frame / fps),
+                            "end": format_time(end_time),
+                            "text": last_text
+                        })
                     
-                    // SRT ဖိုင် အချက်အလက်များ ဖန်တီးရန်
-                    generatedSrtContent = `1\n00:00:01,000 --> 00:00:05,000\n[Movie Recap AI] မင်္ဂလာပါ၊ ဤဗီဒီယိုအတွက် မြန်မာစာတန်းထိုး ထွက်ရှိလာပါပြီ။\n\n2\n00:00:06,000 --> 00:00:12,000\nအခမဲ့ AI ဆာဗာမှ တရုတ် သို့မဟုတ် မည်သည့်ဘာသာစကားကိုမဆို မြန်မာလို အချိန်ကိုက် ဘာသာပြန်ပေးပါသည်။\n\n3\n00:00:13,000 --> 00:00:20,000\nQuickEdit အပ္ပလီကေးရှင်းတွင် ဆက်လက်အသုံးပြုနိုင်ပါပြီ။`;
-                    
-                    // ဒေါင်းလုပ်ခလုတ်ကို ပြသရန်
-                    resultContainer.classList.remove('hidden');
-                }, 2500);
-            }
-        });
-
-        // စာသားပေးပို့ရန် ခလုတ်
-        sendBtn.addEventListener('click', () => {
-            const text = chatInput.value.trim();
-            if (text) {
-                appendMessage(text, 'user');
-                chatInput.value = "";
-                setTimeout(() => {
-                    appendMessage("ဟုတ်ကဲ့၊ အခြား လုပ်ဆောင်ပေးရမည့် အချက်အလက်များ ရှိပါသလားရှင်။", 'ai');
-                }, 1000);
-            }
-        });
-
-        // Chat ထဲသို့ စာသားများ ထည့်သွင်းပေးသည့် ဖန်ရှင်
-        function appendMessage(text, sender) {
-            const div = document.createElement('div');
-            div.className = `flex items-start gap-2 ${sender === 'user' ? 'justify-end' : 'justify-start'}`;
+                    last_text = current_text
+                    start_frame = frame_count
             
-            if (sender === 'user') {
-                div.innerHTML = `<div class="bg-blue-600 text-white text-xs px-3 py-2 rounded-2xl rounded-tr-none max-w-[85%] leading-relaxed">${text}</div>`;
-            } else {
-                div.innerHTML = `<div class="bg-emerald-600 text-white text-xs px-3 py-2 rounded-2xl rounded-tl-none max-w-[85%] leading-relaxed">${text}</div>`;
-            }
+            frame_count += 1
+            if total_frames > 0:
+                progress = min(frame_count / total_frames, 1.0)
+                progress_bar.progress(progress)
+                
+        cap.release()
+        
+        if last_text and total_frames > 0:
+            extracted_data.append({
+                "start": format_time(start_frame / fps),
+                "end": format_time(total_frames / fps),
+                "text": last_text
+            })
             
-            chatBox.appendChild(div);
-            chatBox.scrollTop = chatBox.scrollHeight;
-        }
+        # Session state ထဲသို့ ထည့်ခြင်း (Quick Edit အတွက်)
+        st.session_state.srt_lines = extracted_data
+        status_text.text("ပြီးဆုံးပါပြီ! အောက်ပါ Quick Edit တွင် စစ်ဆေးပြင်ဆင်နိုင်ပါပြီ။")
+        st.success("စာတန်းများကို အောင်မြင်စွာ ထုတ်ယူနိုင်ပါပြီ။")
 
-        // ဒေါင်းလုပ်ဆွဲပြီး QuickEdit သို့ ပို့ဆောင်ခြင်း
-        downloadBtn.addEventListener('click', () => {
-            const blob = new Blob([generatedSrtContent], { type: 'text/plain;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `${selectedVideoName}_myanmar.srt`;
+# အဆင့် ၃ - Quick Edit (ထွက်လာတဲ့ SRT ဖိုင်စာသားများကို တိုက်ရိုက်ပြင်ဆင်နိုင်မည့်နေရာ)
+if st.session_state.srt_lines:
+    st.markdown("---")
+    st.subheader("✍️ အဆင့် ၃ - Quick Edit (SRT စာသားများကို ပြင်ဆင်ရန်)")
+    st.write("OCR ဖတ်ထားမှုတွင် အမှားပါပါက ဤနေရာတွင် တိုက်ရိုက်ဝင်ရောက် ပြင်ဆင်နိုင်ပါသည်။")
+    
+    updated_srt_lines = []
+    
+    for idx, item in enumerate(st.session_state.srt_lines):
+        col1, col2, col3 = st.columns([1, 1, 3])
+        with col1:
+            start_t = st.text_input(f"စချိန် {idx+1}", item["start"], key=f"start_{idx}")
+        with col2:
+            end_t = st.text_input(f"ဆုံးချိန် {idx+1}", item["end"], key=f"end_{idx}")
+        with col3:
+            text_v = st.text_input(f"စာသား {idx+1}", item["text"], key=f"text_{idx}")
             
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-
-            // QuickEdit ဖြင့် ဖွင့်ရန် အသိပေးခြင်း
-            setTimeout(() => {
-                alert("📥 SRT ဖိုင်ကို ဖုန်းထဲသို့ ဒေါင်းလုပ်ဆွဲပြီးပါပြီ!\n\nယခု QuickEdit အက်ပ်ကိုဖွင့်၍ အဆိုပါဖိုင်ကို ရွေးချယ်အသုံးပြုနိုင်ပါပြီရှင်။");
-            }, 500);
-        });
-    </script>
-</body>
-</html>
+        updated_srt_lines.append({
+            "start": start_t,
+            "end": end_t,
+            "text": text_v
+        })
+    
+    # Final SRT ဖိုင်ကို စုစည်းတည်ဆောက်ခြင်း
+    final_srt_content = ""
+    for i, line in enumerate(updated_srt_lines, start=1):
+        final_srt_content += f"{i}\n{line['start']} --> {line['end']}\n{line['text']}\n\n"
+        
+    st.markdown("---")
+    # ဒေါင်းလုဒ်ဆွဲရန် ခလုတ်
+    st.download_button(
+        label="📥 ပြင်ဆင်ပြီးသား SRT ဖိုင်ကို ဒေါင်းလုဒ်လုပ်ရန်",
+        data=final_srt_content,
+        file_name="quick_edited_subtitles.srt",
+        mime="text/plain"
+    )
