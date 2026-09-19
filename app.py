@@ -1,0 +1,143 @@
+import streamlit as st
+import cv2
+import easyocr
+import os
+import numpy as np
+
+# Page configuration
+st.set_page_config(page_title="Video Subtitle Extractor & Quick Edit", layout="wide")
+
+st.title("🎬 Video Hardcoded Subtitle to SRT & Quick Edit")
+st.write("၁။ ဗီဒီယိုရွေးချယ်ပါ ➔ ၂။ SRT ဖိုင်အလိုအလျောက်ထုတ်ယူပါ ➔ ၃။ Quick Edit တွင် စာသားများကို လိုသလို ပြင်ဆင်ပါ")
+
+# EasyOCR Reader ကို cache လုပ်ခြင်း
+@st.cache_resource
+def load_reader():
+    return easyocr.Reader(['en', 'my'], gpu=False)
+
+with st.spinner("AI OCR မော်ဒယ်ကို ချိတ်ဆက်နေပါပြီ... ခဏစောင့်ပေးပါ။"):
+    reader = load_reader()
+
+def format_time(seconds):
+    hours = int(seconds // 3600)
+    minutes = int((seconds % 3600) // 60)
+    secs = int(seconds % 60)
+    milliseconds = int((seconds - int(seconds)) * 1000)
+    return f"{hours:02d}:{minutes:02d}:{secs:02d},{milliseconds:03d}"
+
+# Session State အတွက် သိမ်းဆည်းရန် နေရာများ
+if "srt_lines" not in st.session_state:
+    st.session_state.srt_lines = []
+
+# အဆင့် ၁ - ဗီဒီယိုဖိုင် ရွေးချယ်ခြင်း (Browse / Upload video)
+st.subheader("📁 အဆင့် ၁ - ဗီဒီယိုဖိုင် ရွေးချယ်ပါ")
+uploaded_file = st.file_uploader("သင့်ဖုန်း သို့မဟုတ် ကွန်ပျူတာထဲမှ ဗီဒီယိုဖိုင်ကို ရွေးချယ်ပါ (MP4, MKV, AVI)", type=["mp4", "mkv", "avi", "mov"])
+
+if uploaded_file is not None:
+    video_path = "temp_input_video.mp4"
+    with open(video_path, "wb") as f:
+        f.write(uploaded_file.getbuffer())
+        
+    st.video(video_path)
+    
+    # အဆင့် ၂ - လုပ်ဆောင်ချက်စတင်ရန်
+    if st.button("🚀 ဗီဒီယိုထဲမှ စာတန်းများကို SRT သို့ ပြောင်းမည်"):
+        progress_bar = st.progress(0)
+        status_text = st.empty()
+        
+        cap = cv2.VideoCapture(video_path)
+        fps = cap.get(cv2.CAP_PROP_FPS)
+        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        
+        frame_count = 0
+        extracted_data = []
+        last_text = ""
+        start_frame = 0
+        
+        skip_frames = int(fps) if fps > 0 else 30
+        
+        status_text.text("ဗီဒီယိုကို စစ်ဆေးနေပါပြီ... ခဏစောင့်ပေးပါ။")
+        
+        while cap.isOpened():
+            ret, frame = cap.read()
+            if not ret:
+                break
+                
+            if frame_count % skip_frames == 0:
+                height, width, _ = frame.shape
+                # ဗီဒီယိုအောက်ခြေ ၂၅% ကို ဖြတ်ယူဖတ်မည်
+                crop_frame = frame[int(height*0.75):height, 0:width]
+                
+                results = reader.readtext(crop_frame)
+                current_text = " ".join([res[1] for res in results]) if results else ""
+                current_text = current_text.strip()
+                
+                current_time = frame_count / fps
+                
+                if current_text != last_text:
+                    if last_text:
+                        end_time = current_time
+                        extracted_data.append({
+                            "start": format_time(start_frame / fps),
+                            "end": format_time(end_time),
+                            "text": last_text
+                        })
+                    
+                    last_text = current_text
+                    start_frame = frame_count
+            
+            frame_count += 1
+            if total_frames > 0:
+                progress = min(frame_count / total_frames, 1.0)
+                progress_bar.progress(progress)
+                
+        cap.release()
+        
+        if last_text and total_frames > 0:
+            extracted_data.append({
+                "start": format_time(start_frame / fps),
+                "end": format_time(total_frames / fps),
+                "text": last_text
+            })
+            
+        # Session state ထဲသို့ ထည့်ခြင်း (Quick Edit အတွက်)
+        st.session_state.srt_lines = extracted_data
+        status_text.text("ပြီးဆုံးပါပြီ! အောက်ပါ Quick Edit တွင် စစ်ဆေးပြင်ဆင်နိုင်ပါပြီ။")
+        st.success("စာတန်းများကို အောင်မြင်စွာ ထုတ်ယူနိုင်ပါပြီ။")
+
+# အဆင့် ၃ - Quick Edit (ထွက်လာတဲ့ SRT ဖိုင်စာသားများကို တိုက်ရိုက်ပြင်ဆင်နိုင်မည့်နေရာ)
+if st.session_state.srt_lines:
+    st.markdown("---")
+    st.subheader("✍️ အဆင့် ၃ - Quick Edit (SRT စာသားများကို ပြင်ဆင်ရန်)")
+    st.write("OCR ဖတ်ထားမှုတွင် အမှားပါပါက ဤနေရာတွင် တိုက်ရိုက်ဝင်ရောက် ပြင်ဆင်နိုင်ပါသည်။")
+    
+    updated_srt_lines = []
+    
+    for idx, item in enumerate(st.session_state.srt_lines):
+        col1, col2, col3 = st.columns([1, 1, 3])
+        with col1:
+            start_t = st.text_input(f"စချိန် {idx+1}", item["start"], key=f"start_{idx}")
+        with col2:
+            end_t = st.text_input(f"ဆုံးချိန် {idx+1}", item["end"], key=f"end_{idx}")
+        with col3:
+            text_v = st.text_input(f"စာသား {idx+1}", item["text"], key=f"text_{idx}")
+            
+        updated_srt_lines.append({
+            "start": start_t,
+            "end": end_t,
+            "text": text_v
+        })
+    
+    # Final SRT ဖိုင်ကို စုစည်းတည်ဆောက်ခြင်း
+    final_srt_content = ""
+    for i, line in enumerate(updated_srt_lines, start=1):
+        final_srt_content += f"{i}\n{line['start']} --> {line['end']}\n{line['text']}\n\n"
+        
+    st.markdown("---")
+    # ဒေါင်းလုဒ်ဆွဲရန် ခလုတ်
+    st.download_button(
+        label="📥 ပြင်ဆင်ပြီးသား SRT ဖိုင်ကို ဒေါင်းလုဒ်လုပ်ရန်",
+        data=final_srt_content,
+        file_name="quick_edited_subtitles.srt",
+        mime="text/plain"
+    )
